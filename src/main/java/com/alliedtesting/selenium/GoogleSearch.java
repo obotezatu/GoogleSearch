@@ -22,14 +22,12 @@ import org.apache.poi.ss.usermodel.Font;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
-import org.apache.poi.xssf.usermodel.XSSFCellStyle;
-import org.apache.poi.xssf.usermodel.XSSFFont;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 public class GoogleSearch {
 
 	@Test
-	public void test() {
+	public static void main(String[] args) {
 		System.setProperty("webdriver.chrome.driver",
 				"/media/sef/Archive/ADMINISTRATOR/JAVA/USM_2018/Automation 2019/chromedriver");
 		WebDriver driver = new ChromeDriver();
@@ -43,7 +41,6 @@ public class GoogleSearch {
 				return d.getTitle().toLowerCase().startsWith("cheese!");
 			}
 		});
-
 		List<String> links = getLinksList(driver);
 		if (links.size() < 10) {
 			WebElement page2 = driver.findElement(By.xpath("//tbody/tr/td[3]"));
@@ -55,29 +52,27 @@ public class GoogleSearch {
 			});
 			links.addAll(getLinksList(driver));
 		}
-
 		writeExcel(analysePage(driver, links));
-
 		driver.quit();
 	}
 
-	private List<String> getLinksList(WebDriver driver) {
+	private static List<String> getLinksList(WebDriver driver) {
 		List<WebElement> webElementsLinks = driver.findElements(By
 				.xpath("//div[h2[not(contains(text(),'People also ask'))]]//div[@class='r']//a[contains(.,'heese')]"));
 		return webElementsLinks.stream().map(el -> el.getAttribute("href")).collect(Collectors.toList());
 	}
 
-	private List<PageInfo> analysePage(WebDriver driver, List<String> links) {
+	private static List<PageInfo> analysePage(WebDriver driver, List<String> links) {
 		List<PageInfo> pages = new ArrayList<>();
-		for (String link : links) {
-			driver.get(link);
+		for (int i=0; i<10; i++) {
+			driver.get(links.get(i));
 			(new WebDriverWait(driver, 10)).until(new ExpectedCondition<Boolean>() {
 				public Boolean apply(WebDriver d) {
 					return d.getTitle().toLowerCase().contains("cheese");
 				}
 			});
 			PageInfo pageInfo = new PageInfo();
-			pageInfo.setUrl(link);
+			pageInfo.setUrl(driver.getCurrentUrl());
 			pageInfo.setTitle(driver.getTitle());
 			pageInfo.setOccurrences(StringUtils.countMatches(driver.getPageSource().toLowerCase(), "cheese"));
 			pages.add(pageInfo);
@@ -85,7 +80,7 @@ public class GoogleSearch {
 		return pages;
 	}
 
-	private void writeExcel(List<PageInfo> pages) {
+	private static void writeExcel(List<PageInfo> pages) {
 		try {
 			Workbook wb = new XSSFWorkbook();
 			Sheet sheet = wb.createSheet("Cheese pages");
@@ -96,9 +91,9 @@ public class GoogleSearch {
 			style.setFont(font);
 			rowhead.createCell(0).setCellValue("Title");
 			rowhead.createCell(1).setCellValue("URL");
-			rowhead.createCell(2).setCellValue("Occurrences");
+			rowhead.createCell(2).setCellValue("Occurrences of \"cheese\"");
 
-			for (int i = 0; i <= 3; i++) {
+			for (int i = 0; i <= 2; i++) {
 				rowhead.getCell(i).setCellStyle(style);
 			}
 			int rowNumber = 1;
@@ -122,3 +117,4 @@ public class GoogleSearch {
 		}
 	}
 }
+
